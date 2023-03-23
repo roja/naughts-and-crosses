@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Naughts and Crosses</title>
+    <style>
+      /* Hide scrollbars */
+      html,
+      body {
+        overflow: hidden;
+      }
+
+      /* remove all borders and padding from the body */
+      body {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      // A function to create a new canvas element and add it to the page
+      function createBoard() {
+        // Create a new canvas element
+        var board = document.createElement("canvas");
+        // Set the width and height of the canvas
+        board.width = window.innerWidth;
+        board.height = window.innerHeight;
+        // Add the canvas to the page
+        document.body.appendChild(board);
+        // Return the canvas
+        return board;
+      }
+
+      // A function to set the shape and size of the canvas to a square which is a maximum of 80% of the height or width of the window and to center the canvas horizontally and vertically
+      function resizeBoard(board) {
+        // Calculate the width and height of the canvas
+        var width = window.innerWidth * 0.8;
+        var height = window.innerHeight * 0.8;
+        // Set the width and height of the canvas
+        board.width = Math.min(width, height);
+        board.height = Math.min(width, height);
+        // Calculate the position of the canvas
+        var x = (window.innerWidth - board.width) / 2;
+        var y = (window.innerHeight - board.height) / 2;
+        // Set the position of the canvas
+        board.style.position = "absolute";
+        board.style.left = x + "px";
+        board.style.top = y + "px";
+      }
+
+      // A function to redraw the board
+      function redrawBoard(board) {
+        // Clear the canvas
+        board.getContext("2d").clearRect(0, 0, board.width, board.height);
+        resizeBoard(board);
+        // Draw the board
+        drawBoard(board);
+        // Draw the board state
+        drawBoardState(board);
+        // Draw the next best move
+        // drawBestMove(board);
+      }
+
+      // A function to resize the canvas, board state and the board when the window is resized
+      window.addEventListener("resize", function () {
+        redrawBoard(board);
+      });
+
+      // A function to draw a black naughts and crosses board on the canvas
+      function drawBoard(board) {
+        // Get the 2D context of the canvas
+        var context = board.getContext("2d");
+        // Set the width of the lines
+        context.lineWidth = 4;
+        // Draw the vertical lines
+        context.beginPath();
+        context.moveTo(board.width / 3, 0);
+        context.lineTo(board.width / 3, board.height);
+        context.moveTo((board.width / 3) * 2, 0);
+        context.lineTo((board.width / 3) * 2, board.height);
+        context.stroke();
+        // Draw the horizontal lines
+        context.beginPath();
+        context.moveTo(0, board.height / 3);
+        context.lineTo(board.width, board.height / 3);
+        context.moveTo(0, (board.height / 3) * 2);
+        context.lineTo(board.width, (board.height / 3) * 2);
+        context.stroke();
+      }
+
+      // A function to draw a naught on the canvas in the specified cell which is a maximum of 80% of the height or width of the cell and centered horizontally and vertically
+      function drawNaught(board, row, column, color = "black") {
+        // Get the 2D context of the canvas
+        var context = board.getContext("2d");
+        // Set the width of the lines
+        context.lineWidth = 4;
+        // Set the line color
+        context.strokeStyle = color;
+        // Calculate the position of the naught
+        var x = (board.width / 3) * column + (board.width / 3) * 0.1;
+        var y = (board.height / 3) * row + (board.height / 3) * 0.1;
+        var width = (board.width / 3) * 0.8;
+        var height = (board.height / 3) * 0.8;
+        // Draw the naught
+        context.beginPath();
+        context.arc(
+          x + width / 2,
+          y + height / 2,
+          Math.min(width, height) / 2,
+          0,
+          2 * Math.PI
+        );
+        context.stroke();
+      }
+
+      // A function to draw a cross on the canvas in the specified cell which is a maximum of 80% of the height or width of the cell and centered horizontally and vertically
+      function drawCross(board, row, column, color = "black") {
+        // Get the 2D context of the canvas
+        var context = board.getContext("2d");
+        // Set the width of the lines
+        context.lineWidth = 4;
+        // Set the line color
+        context.strokeStyle = color;
+        // Calculate the position of the cross
+        var x = (board.width / 3) * column + (board.width / 3) * 0.1;
+        var y = (board.height / 3) * row + (board.height / 3) * 0.1;
+        var width = (board.width / 3) * 0.8;
+        var height = (board.height / 3) * 0.8;
+        // Draw the cross
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(x + width, y + height);
+        context.moveTo(x + width, y);
+        context.lineTo(x, y + height);
+        context.stroke();
+      }
+
+      // A function to draw a naught or cross on the canvas based on the state of the game stored in the board array and any winning lines
+      function drawBoardState(board) {
+        // Loop through the board array
+        for (var row = 0; row < 3; row++) {
+          for (var column = 0; column < 3; column++) {
+            // If the cell is 0 then draw a naught
+            if (boardState[row][column] === 0) {
+              drawNaught(board, row, column);
+            }
+            // If the cell is 1 then draw a cross
+            else if (boardState[row][column] === 1) {
+              drawCross(board, row, column);
+            }
+          }
+        }
+        // If there is a winning line then draw it using the drawWinningLine function
+        drawWinningLine(board);
+        // If the game is a draw then set the game over flag to true
+        if (isDraw(boardState)) {
+          gameOver = true;
+        }
+      }
+
+      // A function to identify if the game is a draw
+      function isDraw(board) {
+        // Loop through the board array
+        for (var row = 0; row < 3; row++) {
+          for (var column = 0; column < 3; column++) {
+            // If the cell is null then the game is not a draw
+            if (boardState[row][column] === null) {
+              return false;
+            }
+          }
+        }
+        // If the game is not over then the game is a draw
+        return true;
+      }
+
+      // A function to draw the next best move on the board in light grey
+      function drawBestMove(board) {
+        // If the game is over then return
+        if (gameOver) {
+          return;
+        }
+        // Get the best move
+        var bestMove = getBestMove(boardState);
+        // If the best move is not null then draw it
+        if (bestMove !== null) {
+          // If the turn is 0 then draw a naught
+          if (turn === 0) {
+            drawNaught(board, bestMove.row, bestMove.column, "lightgrey");
+          }
+          // If the turn is 1 then draw a cross
+          else if (turn === 1) {
+            drawCross(board, bestMove.row, bestMove.column, "lightgrey");
+          }
+        }
+      }
+
+      // A function to handle a click on the canvas within a cell and to update the boards state and trigger a redraw of the board state using the drawBoardState function
+      function handleBoardClick(event) {
+        // If the game is over then return
+        if (gameOver) {
+          return;
+        }
+
+        // Get the x and y position of the click relative to the canvas
+        var x = event.clientX - board.offsetLeft;
+        var y = event.clientY - board.offsetTop;
+
+        // Calculate the row and column of the click
+        var row = Math.floor(y / (board.height / 3));
+        var column = Math.floor(x / (board.width / 3));
+
+        // If the cell is null then draw a naught or cross and update the board array
+        if (boardState[row][column] === null) {
+          // If the turn is 0 then draw a naught and update the board array
+          if (turn === 0) {
+            boardState[row][column] = 0;
+          }
+          // If the turn is 1 then draw a cross and update the board array
+          else if (turn === 1) {
+            boardState[row][column] = 1;
+          }
+          // Update the turn
+          turn = (turn + 1) % 2;
+          // Redraw the board state
+          redrawBoard(board);
+        }
+      }
+
+      // A function that returns the start cell and end cell of a row, column or diagonal that has been won checking that all the cells in the row, column or diagonal are the same and not null
+      function getWinningCells(board) {
+        // Loop through the board array
+        for (var row = 0; row < 3; row++) {
+          for (var column = 0; column < 3; column++) {
+            // If the cell is not null then check if the row, column or diagonal has been won
+            if (board[row][column] !== null) {
+              // Check if the row has been won
+              if (
+                board[row][0] === board[row][1] &&
+                board[row][1] === board[row][2] &&
+                board[row][2] !== null
+              ) {
+                return [
+                  { row: row, column: 0 },
+                  { row: row, column: 2 },
+                ];
+              }
+              // Check if the column has been won
+              if (
+                board[0][column] === board[1][column] &&
+                board[1][column] === board[2][column] &&
+                board[2][column] !== null
+              ) {
+                return [
+                  { row: 0, column: column },
+                  { row: 2, column: column },
+                ];
+              }
+              // Check if the diagonal has been won
+              if (
+                row === column &&
+                board[0][0] === board[1][1] &&
+                board[1][1] === board[2][2] &&
+                board[2][2] !== null
+              ) {
+                return [
+                  { row: 0, column: 0 },
+                  { row: 2, column: 2 },
+                ];
+              }
+              // Check if the other diagonal has been won
+              if (
+                row + column === 2 &&
+                board[0][2] === board[1][1] &&
+                board[1][1] === board[2][0] &&
+                board[2][0] !== null
+              ) {
+                return [
+                  { row: 0, column: 2 },
+                  { row: 2, column: 0 },
+                ];
+              }
+            }
+          }
+        }
+        // If no winning row, column or diagonal has been found then return null
+        return null;
+      }
+
+      // A function to draw a full width line across the winning row, column or diagonal using the output of the getWinningCells function.
+      function drawWinningLine(board) {
+        // Get the winning cells
+        var winningCells = getWinningCells(boardState);
+        // If there are winning cells then draw a line across them
+        if (winningCells) {
+          // Get the 2D context of the canvas
+          var context = board.getContext("2d");
+          // Set the width of the line
+          context.lineWidth = 4;
+          // Calculate the start and end positions of the line
+          var startX =
+            (board.width / 3) * winningCells[0].column +
+            (board.width / 3) * 0.5;
+          var startY =
+            (board.height / 3) * winningCells[0].row + (board.height / 3) * 0.5;
+          var endX =
+            (board.width / 3) * winningCells[1].column +
+            (board.width / 3) * 0.5;
+          var endY =
+            (board.height / 3) * winningCells[1].row + (board.height / 3) * 0.5;
+          // Draw the line
+          context.beginPath();
+          context.moveTo(startX, startY);
+          context.lineTo(endX, endY);
+          context.stroke();
+          // Set the game over variable to true
+          gameOver = true;
+        }
+      }
+
+      // A function to add a show hint button to the bottom of the canvas
+      function addShowHintButton() {
+        // Create a button element
+        var button = document.createElement("button");
+        // Set the id of the button
+        button.id = "showHintButton";
+        // Set the text of the button
+        button.textContent = "Show Hint";
+        // Add an event listener to the button
+        button.addEventListener("click", function () {
+          // Draw the best move
+          drawBestMove(board);
+        });
+        // Add the button to the body
+        document.body.appendChild(button);
+      }
+
+      // A function to add a reset button to the bottom of the canvas
+      function addResetButton() {
+        // Create a button element
+        var button = document.createElement("button");
+        // Set the id of the button
+        button.id = "resetButton";
+        // Set the text of the button
+        button.textContent = "Reset";
+        // Add an event listener to the button
+        button.addEventListener("click", function () {
+          // Reset the board state
+          boardState = [
+            [null, null, null],
+            [null, null, null],
+            [null, null, null],
+          ];
+          // Reset the turn
+          turn = 0;
+          // Reset the game over variable
+          gameOver = false;
+          // Redraw the board
+          redrawBoard(board);
+        });
+        // Add the button to the body
+        document.body.appendChild(button);
+      }
+
+      // A function that returns a next move which completes a row, column or diagonal if possible otherwise returns null
+      function getWinningMove(boardState) {
+        // Loop through the board state
+        for (var row = 0; row < 3; row++) {
+          for (var column = 0; column < 3; column++) {
+            // If the cell is null then check if it is a good move
+            if (boardState[row][column] === null) {
+              // Set the cell to the current player
+              boardState[row][column] = turn;
+              // Get the winning cells
+              var winningCells = getWinningCells(boardState);
+              // Reset the cell to null
+              boardState[row][column] = null;
+              // If the winning cells are not null then return the current cell
+              if (winningCells) {
+                return { row: row, column: column };
+              }
+            }
+          }
+        }
+        // Return null
+        return null;
+      }
+
+      // A function that returns a next move which blocks a row, column or diagonal if possible otherwise returns null
+      function getBlockingMove(boardState) {
+        // Loop through the board state
+        for (var row = 0; row < 3; row++) {
+          for (var column = 0; column < 3; column++) {
+            // If the cell is null then check if it is a good move
+            if (boardState[row][column] === null) {
+              // Set the cell to the current player
+              boardState[row][column] = turn === 0 ? 1 : 0;
+              // Get the winning cells
+              var winningCells = getWinningCells(boardState);
+              // Reset the cell to null
+              boardState[row][column] = null;
+              // If the winning cells are not null then return the current cell
+              if (winningCells) {
+                return { row: row, column: column };
+              }
+            }
+          }
+        }
+        // Return null
+        return null;
+      }
+
+      // A function that returns a next move which is next to a corner if possible otherwise returns null
+      function getCornerMove(boardState) {
+        // Loop through the board state
+        for (var row = 0; row < 3; row++) {
+          for (var column = 0; column < 3; column++) {
+            // If the cell is null then check if it is a good move
+            if (boardState[row][column] === null) {
+              // If the cell is next to a corner then return the cell
+              if (
+                (row === 0 && column === 0) ||
+                (row === 0 && column === 2) ||
+                (row === 2 && column === 0) ||
+                (row === 2 && column === 2)
+              ) {
+                return { row: row, column: column };
+              }
+            }
+          }
+        }
+        // Return null
+        return null;
+      }
+
+      // A function that returns a random move
+      function getRandomMove(boardState) {
+        // Create an array to store the empty cells
+        var emptyCells = [];
+        // Loop through the board state
+        for (var row = 0; row < 3; row++) {
+          for (var column = 0; column < 3; column++) {
+            // If the cell is null then add it to the empty cells array
+            if (boardState[row][column] === null) {
+              emptyCells.push({ row: row, column: column });
+            }
+          }
+        }
+        // Return a random cell from the empty cells array
+        return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      }
+
+      // Get a next move that is in the centre if possible otherwise return null
+      function getCentreMove(boardState) {
+        // If the centre cell is null then return the centre cell
+        if (boardState[1][1] === null) {
+          return { row: 1, column: 1 };
+        }
+        // Return null
+        return null;
+      }
+
+      // A function that returns a winning move or a blocking move or a random move
+      function getBestMove(boardState) {
+        // Get the winning move
+        var winningMove = getWinningMove(boardState);
+        // If the winning move is not null then return the winning move
+        if (winningMove) {
+          return winningMove;
+        }
+        // Get the blocking move
+        var blockingMove = getBlockingMove(boardState);
+        // If the blocking move is not null then return the blocking move
+        if (blockingMove) {
+          return blockingMove;
+        }
+        // Get the centre move
+        var centreMove = getCentreMove(boardState);
+        // If the centre move is not null then return the centre move
+        if (centreMove) {
+          return centreMove;
+        }
+        // Get the corner move
+        var cornerMove = getCornerMove(boardState);
+        // If the corner move is not null then return the corner move
+        if (cornerMove) {
+          return cornerMove;
+        }
+        // Return a random move
+        return getRandomMove(boardState);
+      }
+
+      // An array of the naughts and crosses board to store the state of the game
+      var boardState = [
+        [null, null, null],
+        [null, null, null],
+        [null, null, null],
+      ];
+
+      // A variable to store the turn
+      var turn = 0;
+
+      // A variable to store if the game is over
+      var gameOver = false;
+
+      var board = createBoard();
+      redrawBoard(board);
+      board.addEventListener("click", handleBoardClick);
+      addResetButton();
+      addShowHintButton();
+    </script>
+  </body>
+</html>
